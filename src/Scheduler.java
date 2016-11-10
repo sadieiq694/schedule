@@ -2,6 +2,7 @@ import java.util.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.function.Predicate;
 
 
 /**
@@ -178,15 +179,28 @@ public class Scheduler {
         });
     }
 
-    public List<TimePeriod> findAvailableTimes(Section sec, double len) {
+    public List<Section> shuffle(List<Section> list) {
+        List<Section> newList = new ArrayList<Section>();
+        int index = rnd.nextInt(list.size());
+        while(list.size()>0) {
+            index = rnd.nextInt(list.size());
+            Section newElement = list.get(index);
+            newList.add(newElement);
+            list.remove(index);
+        }
+        return newList;
+    }
+
+    public List<TimePeriod> findAvailableTimes(Section sec, int index) {
         List<TimePeriod> li = new ArrayList<TimePeriod>();
         for(TimePeriod t: timesDictionary.values()) {
             li.add(t);
         }
+        double length = sec.course.timeReqs.get(index).length;
         for(int i = li.size()-1; i >= 0; i--) {
-            if (shouldRemove(sec, li.get(i).startTime, len, li.get(i).day)) {
+            if (shouldRemove(sec, li.get(i).startTime, length, li.get(i).day)) {
                 li.remove(i);
-            } else if (li.get(i).length < len) {
+            } else if (li.get(i).length < length) {
                 li.remove(i);
             }
         }
@@ -217,26 +231,82 @@ public class Scheduler {
         return false;
     }
 
-    public int setSectionTimes() {
-        int errorNum = 0;
-        for(int i = 0; i < courseSections.size(); i++) {
-            Section currentSection = courseSections.get(i);
-            for(int j = 0; j < courseSections.get(i).course.timeReqs.size(); j++) {
-                List<TimePeriod> availableTimes = findAvailableTimes(currentSection, currentSection.course.timeReqs.get(j).length);
-                int size = availableTimes.size();
-                if (size==0){
-                    errorNum++;
-                    System.out.println(currentSection.course.name + currentSection.course.timeReqs.get(j).length);
-                } else {
-                    int randInt = rnd.nextInt(size);
-                    TimePeriod t = availableTimes.get(randInt);
-                    double len = currentSection.course.timeReqs.get(j).length;
-                    TimePeriod timeP = new TimePeriod(t.startTime, t.day, len);
-                    currentSection.periods.add(timeP);
-                }
+    /*public List<TimePeriod> dailyAvailableTimes(String day, Section s, int index) {
+        List<TimePeriod> li = findAvailableTimes(s, index);
+        List<TimePeriod> dayTimes = new ArrayList<TimePeriod>();
+        for(TimePeriod t: li) {
+            if (t.day.equals(day)) {
+                dayTimes.add(t);
             }
         }
-        return errorNum;
+        return dayTimes;
+    }*/
+
+    public List<TimePeriod> filterTimes(Predicate<TimePeriod> pred, Section sec, int index) {
+        List<TimePeriod> li = findAvailableTimes(sec, index);
+        List<TimePeriod> dayTimes = new ArrayList<TimePeriod>();
+        for(TimePeriod t: li) {
+            if(pred.test(t)) {
+                dayTimes.add(t);
+            }
+        }
+        return dayTimes;
+    }
+
+    public int assignFirstPeriod(Section s, List<TimePeriod> availT) {
+        int randInt = rnd.nextInt(availT.size());
+        TimePeriod t = availT.get(randInt);
+        TimePeriod timeP = new TimePeriod(t.startTime, t.day, 1); //golden retriever of toxic waste
+        s.periods.add(timeP);
+        return t.startTime;
+    }
+
+    public void assignRestOfPeriods(Section s,  int classTime) {
+        for (int i = 1; i < s.course.timeReqs.size(); i++) {
+            double length = s.course.timeReqs.get(i).length;
+            List<TimePeriod> filtered = filterTimes(t -> t.startTime == classTime, s, i);
+            List<TimePeriod> specAvail = new ArrayList<TimePeriod>();
+            for(TimePeriod t: filtered) {
+                if(t.length >= length) {
+                    specAvail.add(t);
+                }
+            }
+            int randInt = rnd.nextInt(specAvail.size());
+            TimePeriod t = specAvail.get(randInt);
+            double len = length;
+            TimePeriod timeP = new TimePeriod(t.startTime, t.day, len);
+            s.periods.add(timeP);
+        }
+    }
+
+    public int setSectionTimes() {
+        int errorNum = 0;
+        List<Section> shuffledSections= new ArrayList<Section>();
+        shuffledSections = shuffle(courseSections);
+        courseSections = shuffledSections;
+        for(int i = 0; i < courseSections.size(); i++) {
+            Section currentSection = courseSections.get(i);
+            int numPeriods = currentSection.course.timeReqs.size();
+            if (numPeriods == 5) {
+                List<TimePeriod> availT = filterTimes(t -> t.day.equals("Monday"), currentSection, 0);
+                int classT = assignFirstPeriod(currentSection, availT);
+                assignRestOfPeriods(currentSection, classT);
+            } else if(numPeriods == 4) {
+                List<TimePeriod> availT = filterTimes(t -> t.day.equals("Monday"), currentSection, 0);
+                int classT = assignFirstPeriod(currentSection, availT);
+                assignRestOfPeriods(currentSection, classT);
+            } else if (numPeriods == 3 || numPeriods == 2) {
+                List<TimePeriod> availT = filterTimes(t -> t.day.equals("Monday"), currentSection, 0);
+                List<TimePeriod> availTTue = filterTimes(t -> t.day.equals("Tuesday"), currentSection, 0);
+                List<TimePeriod> availTWed = filterTimes(t -> t.day.equals("Wednesday"), currentSection, 0);
+                availT.addAll(availTTue);
+                availT.addAll(availTWed);
+                int classT = assignFirstPeriod(currentSection, availT);
+                assignRestOfPeriods(currentSection, classT);
+            }
+
+            }
+            return 0;
     }
 
     public void resetSchedule()
@@ -257,7 +327,7 @@ public class Scheduler {
             organizer.put(day, new TreeMap<Integer, List<String>>());
         }
         for(int i = 0; i < courseSections.size(); i++) {
-            int numPer = courseSections.get(i).course.timeReqs.size();
+            int numPer = courseSections.get(i).periods.size();
             for(int j = 0; j < numPer; j++) {
                 Section curSection = courseSections.get(i);
                 String curName = curSection.course.name;
