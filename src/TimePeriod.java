@@ -1,15 +1,25 @@
 /**
  * Created by sadie.la on 9/13/2016.
  */
+
 public class TimePeriod {
+    public enum DayofWeek {
+        Monday,
+        Tuesday,
+        Wednesday,
+        Thursday,
+        Friday
+    };
     int timeID;
     int startTime;
     double length;
-    String day;
+    DayofWeek day;
 
-    public TimePeriod(int start, String dayofweek) {this.startTime = start; this.day = dayofweek;}
-    public TimePeriod(int start, String dayOfWeek, double leng) {this.startTime = start; this.day = dayOfWeek; this.length = leng;}
-    public TimePeriod(int id, int start, String dayOfWeek, double leng) {this.timeID = id; this.startTime = start; this.day = dayOfWeek; this.length = leng;}
+
+    public TimePeriod(int start, DayofWeek dayofweek) {this.startTime = start; this.day = dayofweek;}
+    public TimePeriod(int start, DayofWeek dayOfWeek, double leng) {this.startTime = start; this.day = dayOfWeek; this.length = leng;}
+    public TimePeriod(int id, int start, DayofWeek dayOfWeek, double leng) {this.timeID = id; this.startTime = start; this.day = dayOfWeek; this.length = leng;}
+
 
     public TimePeriod (double len) {
         this.length = len;
@@ -21,7 +31,7 @@ public class TimePeriod {
         return hour + minutes;
     }
 
-    public boolean isoverlapping(int strt, double len, String d) {
+    public boolean isoverlapping(int strt, double len, DayofWeek d) {
         double dubStart = milTime(startTime);
         double dubEnd = dubStart + length;
         double testStrt = milTime(strt);

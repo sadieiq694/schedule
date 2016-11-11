@@ -1,4 +1,3 @@
-import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +30,7 @@ public class Section {
         r.addRSection(this);
     }
 
-    public boolean isoverlapping(int strtTime, double len, String d) {
+    public boolean isoverlapping(int strtTime, double len, TimePeriod.DayofWeek d) {
         for(int i = 0; i < periods.size(); i++) {
             if (periods.get(i).isoverlapping(strtTime, len, d)) {
                 return true;

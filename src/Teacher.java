@@ -18,7 +18,7 @@ public class Teacher {
         tsections.add(s);
     }
 
-    public boolean isOccupied(int startTime, double length, String day) {
+    public boolean isOccupied(int startTime, double length, TimePeriod.DayofWeek day) {
         for(int i = 0; i < tsections.size(); i++) {
             Section curSection = tsections.get(i);
             if (curSection.isoverlapping(startTime, length, day)) {

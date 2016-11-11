@@ -1,3 +1,4 @@
+import java.time.DayOfWeek;
 import java.util.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -27,7 +28,7 @@ public class Scheduler {
             while ((timeLine = timeBuffer.readLine()) != null) {
                 ArrayList<String> lineArray = Main.sectionCSVtoArrayList(timeLine);
                 if(lineArray.size() >= 3) {
-                    TimePeriod period = new TimePeriod(Integer.parseInt(lineArray.get(1)), lineArray.get(2), Double.parseDouble(lineArray.get(3)));
+                    TimePeriod period = new TimePeriod(Integer.parseInt(lineArray.get(1)), TimePeriod.DayofWeek.valueOf(lineArray.get(2)), Double.parseDouble(lineArray.get(3)));
                     timesDictionary.put(Integer.parseInt(lineArray.get(0)), period);
                 }
             }
@@ -207,7 +208,7 @@ public class Scheduler {
         return li;
     }
 
-    public boolean shouldRemove(Section curSec, int strttime, double len, String dayofweek) {
+    public boolean shouldRemove(Section curSec, int strttime, double len, TimePeriod.DayofWeek dayofweek) {
         if (curSec.isoverlapping(strttime, len, dayofweek)) {
             return true;
         } else if (curSec.teacher.isOccupied(strttime, len, dayofweek)) {
@@ -219,7 +220,7 @@ public class Scheduler {
         }
     }
 
-    public boolean roomInUse(Section s, int strtTime, double len, String d) {
+    public boolean roomInUse(Section s, int strtTime, double len, TimePeriod.DayofWeek d) {
         for (int i = 0; i < s.room.sections.size(); i++) {
             Section curSec = s.room.sections.get(0);
             for (int j = 0; j < curSec.periods.size(); j++) {
@@ -292,15 +293,11 @@ public class Scheduler {
                 int classT = assignFirstPeriod(currentSection, availT);
                 assignRestOfPeriods(currentSection, classT);
             } else if(numPeriods == 4) {
-                List<TimePeriod> availT = filterTimes(t -> t.day.equals("Monday"), currentSection, 0);
+                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() < TimePeriod.DayofWeek.Tuesday.ordinal(), currentSection, 0);
                 int classT = assignFirstPeriod(currentSection, availT);
                 assignRestOfPeriods(currentSection, classT);
             } else if (numPeriods == 3 || numPeriods == 2) {
-                List<TimePeriod> availT = filterTimes(t -> t.day.equals("Monday"), currentSection, 0);
-                List<TimePeriod> availTTue = filterTimes(t -> t.day.equals("Tuesday"), currentSection, 0);
-                List<TimePeriod> availTWed = filterTimes(t -> t.day.equals("Wednesday"), currentSection, 0);
-                availT.addAll(availTTue);
-                availT.addAll(availTWed);
+                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() < TimePeriod.DayofWeek.Thursday.ordinal(), currentSection, 0);
                 int classT = assignFirstPeriod(currentSection, availT);
                 assignRestOfPeriods(currentSection, classT);
             }
@@ -331,7 +328,7 @@ public class Scheduler {
             for(int j = 0; j < numPer; j++) {
                 Section curSection = courseSections.get(i);
                 String curName = curSection.course.name;
-                String curDay = curSection.periods.get(j).day;
+                TimePeriod.DayofWeek curDay = curSection.periods.get(j).day;
                 Integer curTime = curSection.periods.get(j).startTime;
                 //double curLength = curSection.periods.get(j).length;
                 if (!organizer.get(curDay).containsKey(curTime)) {
