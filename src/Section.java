@@ -39,6 +39,15 @@ public class Section {
         return false;
     }
 
+    public boolean isoverlapping(int strtTime, double len) {
+        for(int i = 0; i < periods.size(); i++) {
+            if (periods.get(i).isoverlapping(strtTime, len)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 
     public boolean isoverlapping(TimePeriod p) {

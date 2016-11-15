@@ -32,16 +32,14 @@ public class TimePeriod {
     }
 
     public boolean isoverlapping(int strt, double len, DayofWeek d) {
+        return isoverlapping(strt, len) && d.equals(day);
+    }
+
+    public boolean isoverlapping(int strt, double len) {
         double dubStart = milTime(startTime);
         double dubEnd = dubStart + length;
         double testStrt = milTime(strt);
         double testEnd = testStrt + len;
-        if(dubEnd > testStrt && dubStart < testEnd && d.equals(day)) {
-            return true;
-        } else {
-            return false;
-        }
-
-        //return (dubEnd > testStrt && dubStart < testEnd);
+        return (dubEnd > testStrt && dubStart < testEnd);
     }
 }

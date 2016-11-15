@@ -245,7 +245,7 @@ public class Scheduler {
 
     public List<TimePeriod> filterTimes(Predicate<TimePeriod> pred, Section sec, int index) {
         List<TimePeriod> li = findAvailableTimes(sec, index);
-        List<TimePeriod> dayTimes = new ArrayList<TimePeriod>();
+        List<TimePeriod> dayTimes = new ArrayList<>();
         for(TimePeriod t: li) {
             if(pred.test(t)) {
                 dayTimes.add(t);
@@ -257,26 +257,26 @@ public class Scheduler {
     public int assignFirstPeriod(Section s, List<TimePeriod> availT) {
         int randInt = rnd.nextInt(availT.size());
         TimePeriod t = availT.get(randInt);
-        TimePeriod timeP = new TimePeriod(t.startTime, t.day, 1); //golden retriever of toxic waste
+        TimePeriod timeP = new TimePeriod(t.startTime, t.day, s.course.timeReqs.get(0).length); //golden retriever of toxic waste
         s.periods.add(timeP);
+        int start = timeP.startTime;
         return t.startTime;
     }
 
-    public void assignRestOfPeriods(Section s,  int classTime) {
-        for (int i = 1; i < s.course.timeReqs.size(); i++) {
-            double length = s.course.timeReqs.get(i).length;
-            List<TimePeriod> filtered = filterTimes(t -> t.startTime == classTime, s, i);
-            List<TimePeriod> specAvail = new ArrayList<TimePeriod>();
-            for(TimePeriod t: filtered) {
-                if(t.length >= length) {
-                    specAvail.add(t);
-                }
+    public int assignRestOfPeriods(Section s, TimePeriod tp) {
+        List<TimePeriod> reqs = s.course.timeReqs;
+        for (int i = 1; i < reqs.size(); i++) {
+            List<TimePeriod> filtered = filterTimes(t -> t.isoverlapping(tp.startTime, tp.length), s, i);
+            if (filtered.size() != 0) {
+                int randInt = rnd.nextInt(filtered.size());
+                TimePeriod t = filtered.get(randInt);
+                double len = reqs.get(i).length;
+                TimePeriod timeP = new TimePeriod(t.startTime, t.day, len);
+                s.periods.add(timeP);
+                return 0;
+            } else {
+                return 1;
             }
-            int randInt = rnd.nextInt(specAvail.size());
-            TimePeriod t = specAvail.get(randInt);
-            double len = length;
-            TimePeriod timeP = new TimePeriod(t.startTime, t.day, len);
-            s.periods.add(timeP);
         }
     }
 
@@ -289,11 +289,12 @@ public class Scheduler {
             Section currentSection = courseSections.get(i);
             int numPeriods = currentSection.course.timeReqs.size();
             if (numPeriods == 5) {
-                List<TimePeriod> availT = filterTimes(t -> t.day.equals("Monday"), currentSection, 0);
+                List<TimePeriod> availT = filterTimes(t -> t.day == TimePeriod.DayofWeek.Monday, currentSection, 0);
                 int classT = assignFirstPeriod(currentSection, availT);
                 assignRestOfPeriods(currentSection, classT);
+                assignRestOfPeriods(currentSection, classT);
             } else if(numPeriods == 4) {
-                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() < TimePeriod.DayofWeek.Tuesday.ordinal(), currentSection, 0);
+                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() <= TimePeriod.DayofWeek.Tuesday.ordinal(), currentSection, 0);
                 int classT = assignFirstPeriod(currentSection, availT);
                 assignRestOfPeriods(currentSection, classT);
             } else if (numPeriods == 3 || numPeriods == 2) {
@@ -302,8 +303,8 @@ public class Scheduler {
                 assignRestOfPeriods(currentSection, classT);
             }
 
-            }
-            return 0;
+        }
+        return 0;
     }
 
     public void resetSchedule()
