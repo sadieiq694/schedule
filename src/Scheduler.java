@@ -254,16 +254,17 @@ public class Scheduler {
         return dayTimes;
     }
 
-    public int assignFirstPeriod(Section s, List<TimePeriod> availT) {
+    public TimePeriod assignFirstPeriod(Section s, List<TimePeriod> availT) {
         int randInt = rnd.nextInt(availT.size());
         TimePeriod t = availT.get(randInt);
         TimePeriod timeP = new TimePeriod(t.startTime, t.day, s.course.timeReqs.get(0).length); //golden retriever of toxic waste
         s.periods.add(timeP);
         int start = timeP.startTime;
-        return t.startTime;
+        return timeP;
     }
 
     public int assignRestOfPeriods(Section s, TimePeriod tp) {
+        int ret = 0;
         List<TimePeriod> reqs = s.course.timeReqs;
         for (int i = 1; i < reqs.size(); i++) {
             List<TimePeriod> filtered = filterTimes(t -> t.isoverlapping(tp.startTime, tp.length), s, i);
@@ -273,11 +274,11 @@ public class Scheduler {
                 double len = reqs.get(i).length;
                 TimePeriod timeP = new TimePeriod(t.startTime, t.day, len);
                 s.periods.add(timeP);
-                return 0;
             } else {
-                return 1;
+                ret++;
             }
         }
+        return ret;
     }
 
     public int setSectionTimes() {
@@ -290,21 +291,21 @@ public class Scheduler {
             int numPeriods = currentSection.course.timeReqs.size();
             if (numPeriods == 5) {
                 List<TimePeriod> availT = filterTimes(t -> t.day == TimePeriod.DayofWeek.Monday, currentSection, 0);
-                int classT = assignFirstPeriod(currentSection, availT);
-                assignRestOfPeriods(currentSection, classT);
-                assignRestOfPeriods(currentSection, classT);
+                TimePeriod classT = assignFirstPeriod(currentSection, availT);
+                errorNum += assignRestOfPeriods(currentSection, classT);
+                errorNum += assignRestOfPeriods(currentSection, classT);
             } else if(numPeriods == 4) {
                 List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() <= TimePeriod.DayofWeek.Tuesday.ordinal(), currentSection, 0);
-                int classT = assignFirstPeriod(currentSection, availT);
-                assignRestOfPeriods(currentSection, classT);
+                TimePeriod classT = assignFirstPeriod(currentSection, availT);
+                errorNum += assignRestOfPeriods(currentSection, classT);
             } else if (numPeriods == 3 || numPeriods == 2) {
                 List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() < TimePeriod.DayofWeek.Thursday.ordinal(), currentSection, 0);
-                int classT = assignFirstPeriod(currentSection, availT);
-                assignRestOfPeriods(currentSection, classT);
+                TimePeriod classT = assignFirstPeriod(currentSection, availT);
+                errorNum += assignRestOfPeriods(currentSection, classT);
             }
 
         }
-        return 0;
+        return errorNum;
     }
 
     public void resetSchedule()
