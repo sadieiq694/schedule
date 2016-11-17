@@ -15,8 +15,7 @@ public class Scheduler {
     Map<Integer, Teacher> teachersDictionary = new HashMap<Integer, Teacher>();
     Map<Integer, Course> coursesDictionary = new HashMap<Integer, Course>();
     Map<Integer, Room> roomsDictionary = new HashMap<Integer, Room>();
-    Map<String, TreeMap<Integer, List<String>>> organizer = new HashMap<String, TreeMap<Integer, List<String>>>();
-    String[] weekDays = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday"};
+    Map<TimePeriod.DayofWeek, TreeMap<Integer, List<String>>> organizer = new HashMap<TimePeriod.DayofWeek, TreeMap<Integer, List<String>>>();
     Random rnd = new Random();
 
     public void keyTimes() {
@@ -213,9 +212,11 @@ public class Scheduler {
             return true;
         } else if (curSec.teacher.isOccupied(strttime, len, dayofweek)) {
             return true;
-        } else if(roomInUse(curSec, strttime, len, dayofweek)) {
+        } else if (roomInUse(curSec, strttime, len, dayofweek)) {
             return true;
-        } else {
+        } else if (curSec.sameDay(dayofweek)) { //FIXXXXX!!!!
+            return true;
+        } else{
             return false;
         }
     }
@@ -322,35 +323,46 @@ public class Scheduler {
     public void viewSchedule() { //this function is really ugly rn I'm just checking if it works ahhhh
         //dictionary w/in a dictionary first key = day, keys to a second dictionary whose key is time
 
-        for(String day: weekDays) {
+        for(TimePeriod.DayofWeek day: TimePeriod.DayofWeek.values()) {
             organizer.put(day, new TreeMap<Integer, List<String>>());
         }
         for(int i = 0; i < courseSections.size(); i++) {
             int numPer = courseSections.get(i).periods.size();
             for(int j = 0; j < numPer; j++) {
                 Section curSection = courseSections.get(i);
-                String curName = curSection.course.name;
                 TimePeriod.DayofWeek curDay = curSection.periods.get(j).day;
                 Integer curTime = curSection.periods.get(j).startTime;
+                String courseInfo;
+                if(curSection.periods.get(j).length == 1) {
+                    courseInfo = curSection.sectionID.toString() + " " + curSection.course.name + " " + curSection.teacher.name + " " + curSection.room.roomNum;
+                } else {
+                    courseInfo = curSection.sectionID.toString() + " " + curSection.course.name + " " + curSection.teacher.name + " " + curSection.room.roomNum + " " + "lab";
+                }
                 //double curLength = curSection.periods.get(j).length;
                 if (!organizer.get(curDay).containsKey(curTime)) {
                     organizer.get(curDay).put(curTime, new ArrayList<String>());
                 }
-                organizer.get(curDay).get(curTime).add(curName);
+                organizer.get(curDay).get(curTime).add(courseInfo);
             }
         }
 
-        for(String day: weekDays) {
+        System.out.println("<table>");
+        System.out.println("<tr> <th>Day</th> <th>8:30</th> <th>9:30</th> <th>10:30</th> <th>11:30</th> <th>1:30</th> <th>2:30</th> <th>3:30</th> <th>4:30</th> <th>6:00</th> </tr>");
+
+        for(TimePeriod.DayofWeek day: TimePeriod.DayofWeek.values()) {
             Map<Integer, List<String>> dayMap = organizer.get(day);
-            System.out.println(day);
+            System.out.println("<tr> <td>" + day.name() + "</td>");
             for(Map.Entry<Integer, List<String>> entry: dayMap.entrySet()) {
-                if(entry.getKey() > 1230) {
-                    System.out.print(entry.getKey()-1200);
+                /*if(entry.getKey() > 1230) {
+                    //System.out.print(entry.getKey()-1200);
                 } else {
                     System.out.print(entry.getKey());
-                }
-                System.out.println(entry.getValue());
+                }*/
+                System.out.println("<td>" + entry.getValue() + "</td>");
             }
+            System.out.println("</tr>");
         }
+
+        System.out.println("</table>");
     }
 }

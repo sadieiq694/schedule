@@ -42,4 +42,8 @@ public class TimePeriod {
         double testEnd = testStrt + len;
         return (dubEnd > testStrt && dubStart < testEnd);
     }
+
+    public boolean sameDay(DayofWeek d) {
+        return this.day == d;
+    }
 }

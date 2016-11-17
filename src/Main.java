@@ -11,6 +11,7 @@ import java.util.ArrayList;
  class - list (identical of periods w no times set, just the number/length of slots)
  section - list periods w time and lengths
  courses file - specify number of blocks, how long they have to be
+ //parameter for not two sections of one class on the same day
 
  **/
 public class Main {
@@ -23,15 +24,20 @@ public class Main {
         schedule.keyRooms();
         schedule.loadCourseSections();
 
+        int minErrors = 1000;
         int errors = 0;
         do {
 
             schedule.resetSchedule();
             errors = schedule.setSectionTimes();
             // schedule.testVisitor();
-            schedule.viewSchedule();
-            System.out.println(errors);
-        } while (errors > 0);
+            //System.out.println(errors);
+            if (errors < minErrors) {
+                minErrors = errors;
+                System.out.println(errors);
+            }
+        } while (errors > 15);
+        schedule.viewSchedule();
         //System.out.println(errors);
 
     }
