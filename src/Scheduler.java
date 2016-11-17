@@ -214,9 +214,11 @@ public class Scheduler {
             return true;
         } else if (roomInUse(curSec, strttime, len, dayofweek)) {
             return true;
-        } else if (curSec.sameDay(dayofweek)) { //FIXXXXX!!!!
+        }
+        /*else if (curSec.sameDay(dayofweek)) { //FIXXXXX!!!!
             return true;
-        } else{
+        } */
+        else{
             return false;
         }
     }
@@ -267,6 +269,7 @@ public class Scheduler {
     public int assignRestOfPeriods(Section s, TimePeriod tp) {
         int ret = 0;
         List<TimePeriod> reqs = s.course.timeReqs;
+        TimePeriod.DayofWeek mustBeAfter = tp.day;
         for (int i = 1; i < reqs.size(); i++) {
             List<TimePeriod> filtered = filterTimes(t -> t.isoverlapping(tp.startTime, tp.length), s, i);
             if (filtered.size() != 0) {
@@ -294,7 +297,7 @@ public class Scheduler {
                 List<TimePeriod> availT = filterTimes(t -> t.day == TimePeriod.DayofWeek.Monday, currentSection, 0);
                 TimePeriod classT = assignFirstPeriod(currentSection, availT);
                 errorNum += assignRestOfPeriods(currentSection, classT);
-                errorNum += assignRestOfPeriods(currentSection, classT);
+              //  errorNum += assignRestOfPeriods(currentSection, classT);
             } else if(numPeriods == 4) {
                 List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() <= TimePeriod.DayofWeek.Tuesday.ordinal(), currentSection, 0);
                 TimePeriod classT = assignFirstPeriod(currentSection, availT);
