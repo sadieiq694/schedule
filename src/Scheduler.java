@@ -260,7 +260,6 @@ public class Scheduler {
         TimePeriod t = availT.get(randInt);
         TimePeriod timeP = new TimePeriod(t.startTime, t.day, s.course.timeReqs.get(0).length); //golden retriever of toxic waste
         s.periods.add(timeP);
-        int start = timeP.startTime;
         return timeP;
     }
 

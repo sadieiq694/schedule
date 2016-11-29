@@ -36,7 +36,7 @@ public class Main {
                 minErrors = errors;
                 System.out.println(errors);
             }
-        } while (errors > 15);
+        } while (errors > 10);
         schedule.viewSchedule();
         //System.out.println(errors);
 
