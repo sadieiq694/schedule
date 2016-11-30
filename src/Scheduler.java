@@ -191,12 +191,11 @@ public class Scheduler {
         return newList;
     }
 
-    public List<TimePeriod> findAvailableTimes(Section sec, int index) {
+    public List<TimePeriod> findAvailableTimes(Section sec, double length) {
         List<TimePeriod> li = new ArrayList<TimePeriod>();
         for(TimePeriod t: timesDictionary.values()) {
             li.add(t);
         }
-        double length = sec.course.timeReqs.get(index).length;
         for(int i = li.size()-1; i >= 0; i--) {
             if (shouldRemove(sec, li.get(i).startTime, length, li.get(i).day)) {
                 li.remove(i);
@@ -214,8 +213,8 @@ public class Scheduler {
             return true;
         } else if (roomInUse(curSec, strttime, len, dayofweek)) {
             return true;
-        } else if (curSec.sameDay(dayofweek)) { //FIXXXXX!!!!
-            return true;
+        /*} else if (curSec.sameDay(dayofweek)) { //FIXXXXX!!!!
+            return true;*/
         } else{
             return false;
         }
@@ -244,8 +243,8 @@ public class Scheduler {
         return dayTimes;
     }*/
 
-    public List<TimePeriod> filterTimes(Predicate<TimePeriod> pred, Section sec, int index) {
-        List<TimePeriod> li = findAvailableTimes(sec, index);
+    public List<TimePeriod> filterTimes(Predicate<TimePeriod> pred, Section sec, double length) {
+        List<TimePeriod> li = findAvailableTimes(sec, length);
         List<TimePeriod> dayTimes = new ArrayList<>();
         for(TimePeriod t: li) {
             if(pred.test(t)) {
@@ -264,10 +263,10 @@ public class Scheduler {
     }
 
     public int assignRestOfPeriods(Section s, TimePeriod tp) {
-        int ret = 0;
+        int errorNum = 0;
         List<TimePeriod> reqs = s.course.timeReqs;
         for (int i = 1; i < reqs.size(); i++) {
-            List<TimePeriod> filtered = filterTimes(t -> t.isoverlapping(tp.startTime, tp.length), s, i);
+            List<TimePeriod> filtered = filterTimes(t -> t.isoverlapping(tp.startTime, tp.length), s, reqs.get(i).length);
             if (filtered.size() != 0) {
                 int randInt = rnd.nextInt(filtered.size());
                 TimePeriod t = filtered.get(randInt);
@@ -275,10 +274,10 @@ public class Scheduler {
                 TimePeriod timeP = new TimePeriod(t.startTime, t.day, len);
                 s.periods.add(timeP);
             } else {
-                ret++;
+                errorNum++;
             }
         }
-        return ret;
+        return errorNum;
     }
 
     public int setSectionTimes() {
@@ -290,16 +289,15 @@ public class Scheduler {
             Section currentSection = courseSections.get(i);
             int numPeriods = currentSection.course.timeReqs.size();
             if (numPeriods == 5) {
-                List<TimePeriod> availT = filterTimes(t -> t.day == TimePeriod.DayofWeek.Monday, currentSection, 0);
+                List<TimePeriod> availT = filterTimes(t -> t.day == TimePeriod.DayofWeek.Monday, currentSection, currentSection.course.timeReqs.get(0).length);
                 TimePeriod classT = assignFirstPeriod(currentSection, availT);
                 errorNum += assignRestOfPeriods(currentSection, classT);
-                errorNum += assignRestOfPeriods(currentSection, classT);
             } else if(numPeriods == 4) {
-                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() <= TimePeriod.DayofWeek.Tuesday.ordinal(), currentSection, 0);
+                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() <= TimePeriod.DayofWeek.Tuesday.ordinal(), currentSection, currentSection.course.timeReqs.get(0).length);
                 TimePeriod classT = assignFirstPeriod(currentSection, availT);
                 errorNum += assignRestOfPeriods(currentSection, classT);
             } else if (numPeriods == 3 || numPeriods == 2) {
-                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() < TimePeriod.DayofWeek.Thursday.ordinal(), currentSection, 0);
+                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() < TimePeriod.DayofWeek.Thursday.ordinal(), currentSection, currentSection.course.timeReqs.get(0).length);
                 TimePeriod classT = assignFirstPeriod(currentSection, availT);
                 errorNum += assignRestOfPeriods(currentSection, classT);
             }
