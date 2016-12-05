@@ -1,3 +1,4 @@
+import java.io.PrintWriter;
 import java.time.DayOfWeek;
 import java.util.*;
 import java.io.BufferedReader;
@@ -213,17 +214,9 @@ public class Scheduler {
             return true;
         } else if (roomInUse(curSec, strttime, len, dayofweek)) {
             return true;
-<<<<<<< HEAD
-        /*} else if (curSec.sameDay(dayofweek)) { //FIXXXXX!!!!
-            return true;*/
-        } else{
-=======
-        }
-        /*else if (curSec.sameDay(dayofweek)) { //FIXXXXX!!!!
+        } else if (curSec.sameDay(dayofweek)) { //FIXXXXX!!!!
             return true;
-        } */
-        else{
->>>>>>> 9c31347ab9078575d7702520c01c11e2ba54fd0e
+        } else{
             return false;
         }
     }
@@ -275,7 +268,7 @@ public class Scheduler {
         List<TimePeriod> reqs = s.course.timeReqs;
         TimePeriod.DayofWeek mustBeAfter = tp.day;
         for (int i = 1; i < reqs.size(); i++) {
-            List<TimePeriod> filtered = filterTimes(t -> t.isoverlapping(tp.startTime, tp.length), s, reqs.get(i).length);
+            List<TimePeriod> filtered = filterTimes(t -> t.day.ordinal() > mustBeAfter.ordinal() && t.isoverlapping(tp.startTime, tp.length), s, reqs.get(i).length);
             if (filtered.size() != 0) {
                 int randInt = rnd.nextInt(filtered.size());
                 TimePeriod t = filtered.get(randInt);
@@ -301,22 +294,19 @@ public class Scheduler {
                 List<TimePeriod> availT = filterTimes(t -> t.day == TimePeriod.DayofWeek.Monday, currentSection, currentSection.course.timeReqs.get(0).length);
                 TimePeriod classT = assignFirstPeriod(currentSection, availT);
                 errorNum += assignRestOfPeriods(currentSection, classT);
-<<<<<<< HEAD
-=======
-              //  errorNum += assignRestOfPeriods(currentSection, classT);
->>>>>>> 9c31347ab9078575d7702520c01c11e2ba54fd0e
             } else if(numPeriods == 4) {
                 List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() <= TimePeriod.DayofWeek.Tuesday.ordinal(), currentSection, currentSection.course.timeReqs.get(0).length);
                 TimePeriod classT = assignFirstPeriod(currentSection, availT);
                 errorNum += assignRestOfPeriods(currentSection, classT);
             } else if (numPeriods == 3 || numPeriods == 2) {
-                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() < TimePeriod.DayofWeek.Thursday.ordinal(), currentSection, currentSection.course.timeReqs.get(0).length);
+                List<TimePeriod> availT = filterTimes(t -> t.day.ordinal() <= TimePeriod.DayofWeek.Wednesday.ordinal(), currentSection, currentSection.course.timeReqs.get(0).length);
                 TimePeriod classT = assignFirstPeriod(currentSection, availT);
                 errorNum += assignRestOfPeriods(currentSection, classT);
             }
-
         }
         return errorNum;
+        /*All periods (except 11:30) are listed as two hour blocks to tell the program it can put a lab block there; this is
+        messing up the filter times function because it is saying periods overlap that actually don't*/
     }
 
     public void resetSchedule()
@@ -330,7 +320,7 @@ public class Scheduler {
     }
 
 
-    public void viewSchedule() { //this function is really ugly rn I'm just checking if it works ahhhh
+    public void viewSchedule() {
         //dictionary w/in a dictionary first key = day, keys to a second dictionary whose key is time
 
         for(TimePeriod.DayofWeek day: TimePeriod.DayofWeek.values()) {
@@ -356,23 +346,26 @@ public class Scheduler {
             }
         }
 
-        System.out.println("<table>");
-        System.out.println("<tr> <th>Day</th> <th>8:30</th> <th>9:30</th> <th>10:30</th> <th>11:30</th> <th>1:30</th> <th>2:30</th> <th>3:30</th> <th>4:30</th> <th>6:00</th> </tr>");
+        try{
+            PrintWriter writer = new PrintWriter("schedule.html", "UTF-8");
 
-        for(TimePeriod.DayofWeek day: TimePeriod.DayofWeek.values()) {
-            Map<Integer, List<String>> dayMap = organizer.get(day);
-            System.out.println("<tr> <td>" + day.name() + "</td>");
-            for(Map.Entry<Integer, List<String>> entry: dayMap.entrySet()) {
-                /*if(entry.getKey() > 1230) {
-                    //System.out.print(entry.getKey()-1200);
-                } else {
-                    System.out.print(entry.getKey());
-                }*/
-                System.out.println("<td>" + entry.getValue() + "</td>");
+            writer.println("<table>");
+            writer.println("<tr> <th>Day</th> <th>8:30</th> <th>9:30</th> <th>10:30</th> <th>11:30</th> <th>1:30</th> <th>2:30</th> <th>3:30</th> <th>4:30</th> <th>6:00</th> </tr>");
+
+            for(TimePeriod.DayofWeek day: TimePeriod.DayofWeek.values()) {
+                Map<Integer, List<String>> dayMap = organizer.get(day);
+                writer.println("<tr> <td>" + day.name() + "</td>");
+                for(Map.Entry<Integer, List<String>> entry: dayMap.entrySet()) {
+                    writer.println("<td>" + entry.getValue() + "</td>");
+                }
+                writer.println("</tr>");
             }
-            System.out.println("</tr>");
-        }
 
-        System.out.println("</table>");
+            writer.println("</table>");
+
+            writer.close();
+        } catch (IOException e) {
+            // do something
+        }
     }
 }
