@@ -214,7 +214,7 @@ public class Scheduler {
             return true;
         } else if (roomInUse(curSec, strttime, len, dayofweek)) {
             return true;
-        } else if (curSec.sameDay(dayofweek)) { //FIXXXXX!!!!
+        } else if (curSec.sameDay(dayofweek)) {
             return true;
         } else{
             return false;
@@ -268,7 +268,13 @@ public class Scheduler {
         List<TimePeriod> reqs = s.course.timeReqs;
         TimePeriod.DayofWeek mustBeAfter = tp.day;
         for (int i = 1; i < reqs.size(); i++) {
-            List<TimePeriod> filtered = filterTimes(t -> t.day.ordinal() > mustBeAfter.ordinal() && t.isoverlapping(tp.startTime, tp.length), s, reqs.get(i).length);
+            List<TimePeriod> filtered = new ArrayList<TimePeriod>();
+            double reqLength = reqs.get(i).length;
+            if(reqLength < 2) {
+                filtered = filterTimes(t -> t.day.ordinal() > mustBeAfter.ordinal() && t.startTime == tp.startTime, s, reqLength);
+            } else {
+                filtered = filterTimes(t -> t.day.ordinal() > mustBeAfter.ordinal() && t.isoverlapping(tp.startTime, tp.length), s, reqLength);
+            }
             if (filtered.size() != 0) {
                 int randInt = rnd.nextInt(filtered.size());
                 TimePeriod t = filtered.get(randInt);
