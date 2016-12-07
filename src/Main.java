@@ -24,7 +24,7 @@ public class Main {
         schedule.keyRooms();
         schedule.loadCourseSections();
 
-        int minErrors = 1000;
+        int minErrors = 20;
         int errors = 0;
         do {
 
@@ -36,7 +36,7 @@ public class Main {
                 minErrors = errors;
                 System.out.println(errors);
             }
-        } while (errors > 5);
+        } while (errors > 0);
         schedule.viewSchedule();
         //System.out.println(errors);
 
