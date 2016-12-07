@@ -18,10 +18,10 @@ public class Main {
     public static void main(String[] args) {
 
         Scheduler schedule = new Scheduler();
-        schedule.keyCourse();
-        schedule.keyTimes();
-        schedule.keyTeachers();
-        schedule.keyRooms();
+        schedule.loadCourse();
+        schedule.loadTimes();
+        schedule.loadTeachers();
+        schedule.loadRooms();
         schedule.loadCourseSections();
 
         int minErrors = 20;

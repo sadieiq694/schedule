@@ -19,7 +19,7 @@ public class Scheduler {
     Map<TimePeriod.DayofWeek, TreeMap<Integer, List<String>>> organizer = new HashMap<TimePeriod.DayofWeek, TreeMap<Integer, List<String>>>();
     Random rnd = new Random();
 
-    public void keyTimes() {
+    public void loadTimes() {
         //assigns time periods (time and day) to integer keys in a hashmap
         BufferedReader timeBuffer = null;
         try {
@@ -43,16 +43,35 @@ public class Scheduler {
         }
     }
 
-    public void keyCourse() {
+    interface DataLineHandler<T> {
+        public void parseLine(ArrayList<String> lineArray, T context);
+    }
+
+    public <T> void loader(String filename, DataLineHandler<T> dataLineHandler, T context) {
         //assigns Courses to integer keys in a hashmap
         BufferedReader classBuffer = null;
         try {
             String classLine;
-            classBuffer = new BufferedReader(new FileReader("data/courseData.csv"));
+            classBuffer = new BufferedReader(new FileReader(filename));
 
             while ((classLine = classBuffer.readLine()) != null) {
                 ArrayList<String> lineArray = Main.sectionCSVtoArrayList(classLine);
-                //System.out.println("Class data: " + lineArray);
+                dataLineHandler.parseLine(lineArray, context);
+            }
+
+        } catch (IOException e) {
+        e.printStackTrace();
+    } finally {
+        try {
+            if (classBuffer != null) classBuffer.close();
+        } catch (IOException courseException) {
+            courseException.printStackTrace();
+        }
+    }
+    }
+
+    public void loadCourse() {
+        loader("data/courseData.csv", ((lineArray, dictionary) -> {
                 if (lineArray.size() >= 4) {
                     Course nCourse = new Course(lineArray.get(1));
                     for (int i = 3; i < lineArray.size(); i++) {
@@ -60,84 +79,31 @@ public class Scheduler {
                     }
                     coursesDictionary.put(Integer.parseInt(lineArray.get(0)), nCourse);
                 }
-            }
+        }), coursesDictionary);
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (classBuffer != null) classBuffer.close();
-            } catch (IOException courseException) {
-                courseException.printStackTrace();
-            }
-        }
     }
 
-    public void keyTeachers() {
-        BufferedReader teacherBuffer = null;
-
-        try {
-            String teacherLine;
-            teacherBuffer = new BufferedReader(new FileReader("data/teacherData.csv"));
-
-            while ((teacherLine = teacherBuffer.readLine()) != null) {
-                ArrayList<String> lineArray = Main.sectionCSVtoArrayList(teacherLine);
-                //System.out.println("Teacher data: " + lineArray);
+    public void loadTeachers() {
+        loader("data/teacherData.csv", ((lineArray, dictionary) -> {
                 if (lineArray.size() == 2) {
                     Teacher nTeacher = new Teacher(Integer.parseInt(lineArray.get(0)), lineArray.get(1));
                     teachersDictionary.put(nTeacher.teacherID, nTeacher);
                 }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (teacherBuffer != null) teacherBuffer.close();
-            } catch (IOException sectionException) {
-                sectionException.printStackTrace();
-            }
-        }
+            }), teachersDictionary);
     }
 
-    public void keyRooms() {
+    public void loadRooms() {
+        loader("data/room.csv", ((lineArray, dictionary) -> {
         BufferedReader roomBuffer = null;
-
-        try {
-            String roomLine;
-            roomBuffer = new BufferedReader(new FileReader("data/room.csv"));
-
-            while ((roomLine = roomBuffer.readLine()) != null) {
-                ArrayList<String> lineArray = Main.sectionCSVtoArrayList(roomLine);
-                //System.out.println("Teacher data: " + lineArray);
                 if (lineArray.size() == 2) {
                     Room nRoom = new Room(Integer.parseInt(lineArray.get(0)), lineArray.get(1));
                     roomsDictionary.put(nRoom.roomID, nRoom);
                 }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (roomBuffer != null) roomBuffer.close();
-            } catch (IOException sectionException) {
-                sectionException.printStackTrace();
-            }
-        }
+            }), roomsDictionary);
     }
 
     public void loadCourseSections() {
-
-        BufferedReader sectionBuffer = null;
-
-        try {
-            String sectionLine;
-            sectionBuffer = new BufferedReader(new FileReader("data/sectionData.csv"));
-
-            while ((sectionLine = sectionBuffer.readLine()) != null) {
-                //System.out.println("Raw data: " + sectionLine);
-                ArrayList<String> lineArray = Main.sectionCSVtoArrayList(sectionLine);
-                //System.out.println("ArrayList data: " + lineArray);
-                //String courseNum = lineArray.get(0);
+        loader("data/courseData.csv", ((lineArray, dictionary) -> {
                 if (lineArray.size() == 4) {
                     Integer i = Integer.parseInt(lineArray.get(3));
                     Room r = roomsDictionary.get(Integer.parseInt(lineArray.get(3)));
@@ -145,39 +111,7 @@ public class Scheduler {
                     courseSections.add(courseSec);
                     //System.out.println(courseSec.course.name + courseSec.teacher.name);
                 }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (sectionBuffer != null) sectionBuffer.close();
-            } catch (IOException sectionException) {
-                sectionException.printStackTrace();
-            }
-        }
-    }
-
-    public interface PeriodVisitor {
-        void visit(Course c, Section s, TimePeriod p);
-    }
-
-    public void accept(PeriodVisitor visitor) {
-        for(int i = 0; i < courseSections.size(); i++) {
-            Section currentSection = courseSections.get(i);
-            for(int j = 0; j < currentSection.periods.size(); j++) {
-                visitor.visit(currentSection.course, currentSection, currentSection.periods.get(j));
-            }
-        }
-    }
-
-    public void testVisitor() {
-        accept(new PeriodVisitor() {
-            @Override
-            public void visit(Course c, Section s, TimePeriod p) {
-                System.out.println(c.name + " " + s.sectionID + " " + p.day + ", " + p.startTime + " ");
-
-            }
-        });
+            }), coursesDictionary);
     }
 
     public List<Section> shuffle(List<Section> list) {
@@ -232,17 +166,6 @@ public class Scheduler {
         }
         return false;
     }
-
-    /*public List<TimePeriod> dailyAvailableTimes(String day, Section s, int index) {
-        List<TimePeriod> li = findAvailableTimes(s, index);
-        List<TimePeriod> dayTimes = new ArrayList<TimePeriod>();
-        for(TimePeriod t: li) {
-            if (t.day.equals(day)) {
-                dayTimes.add(t);
-            }
-        }
-        return dayTimes;
-    }*/
 
     public List<TimePeriod> filterTimes(Predicate<TimePeriod> pred, Section sec, double length) {
         List<TimePeriod> li = findAvailableTimes(sec, length);
